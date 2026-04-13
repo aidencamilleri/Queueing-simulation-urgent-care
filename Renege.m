@@ -1,26 +1,24 @@
-classdef Renege
+classdef Renege < Event
     %Renege Subclass of Event that represents the renege of a
     % Customer.
 
     properties
-        % ServerIndex - Index of the service station from which the
-        % renege occurred
-        ServerIndex;
+        %Id of customer
+        custID;
     end
     methods
-        function obj = Renege(Time, ServerIndex)
+        function obj = Renege(Time, custID)
             % Renege - Construct a renege event from a time and
-            % server index.
+            % custID.
             arguments
                 Time = 0.0;
-                ServerIndex = 0;
+                custID = 0;
             end
             
             % MATLAB-ism: This incantation is how to invoke the superclass
             % constructor.
             obj = obj@Event(Time);
 
-            obj.ServerIndex = ServerIndex;
         end
         function varargout = visit(obj, other)
             % visit - Call handle_renege
