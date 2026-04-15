@@ -21,16 +21,16 @@ classdef ServiceQueueRenege < handle
         % them to renege is distributed with a rate
         % parameter of RenegeRate.
         % The default is one per 15 mins.
-        RenegeRate = 4;
+        RenegeRate = 1/4;
 
         % RenegeDist - When a customer arrives, the time it takes for
         % them to renege is distributed with a distribution
         % parameter of RenegeDist.
         % The default is exponential.
-        RenegeDist = makedist("Exponential", "mu", RenegeRate);  
+        RenegeDist = makedist("Exponential");  
 
         % Reneged - A cell array of Customer.
-        Reneged = Customer();         
+        Reneged = {};         
 
         % NumServers - How many identical serving stations are available.
         NumServers = 1;
@@ -92,7 +92,7 @@ classdef ServiceQueueRenege < handle
         % * NumWaiting - How many customers are currently waiting
         % * NumInService - How many are currently being served
         % * NumServed -  How many have been served
-        Log = table(Size=[0, 4], ...
+        Log = table(Size=[0, 5], ...
             VariableNames=...
             {'Time', 'NumWaiting', 'NumInService', 'NumServed', 'NumReneged'}, ...
             VariableTypes=...
@@ -102,7 +102,7 @@ classdef ServiceQueueRenege < handle
 
     methods
 
-        function obj = ServiceQueue(KWArgs)
+        function obj = ServiceQueueRenege(KWArgs)
             % ServiceQueue Constructor. Public properties can be specified
             % as named arguments.
 
@@ -112,7 +112,7 @@ classdef ServiceQueueRenege < handle
             arguments
                 % Special syntax declaring that the allowed named arguments
                 % should match the public properties of class ServiceQueue.
-                KWArgs.?ServiceQueue;
+                KWArgs.?ServiceQueueRenege;
             end
 
             % Since this method is a constructor, the obj output variable
@@ -198,6 +198,11 @@ classdef ServiceQueueRenege < handle
             % The Customer is appended to the list of waiting customers.
             obj.Waiting{end+1} = c;
 
+            % Generates time at which the new customer will renege 
+            % and schedule a Renege Event
+            cust_renege = Renege(obj.Time + random(obj.RenegeDist), arrival.Customer.Id);
+            schedule_event(obj, cust_renege);
+
             % Construct the next Customer that will arrive.
             % Its Id is one higher than the one that just arrived.
             next_customer = Customer(c.Id + 1);
@@ -212,10 +217,6 @@ classdef ServiceQueueRenege < handle
                 Arrival(obj.Time + inter_arrival_time, next_customer);
             schedule_event(obj, next_arrival);
 
-            % Generates time at which the new customer will renege 
-            % and schedule a Renege Event
-            cust_renege = Renege(obj.Time + random(obj.RenegeDist), next_customer.Id);
-            schedule_event(cust_renege);
 
             % Check to see if any customers can advance.
             advance(obj);
@@ -226,19 +227,21 @@ classdef ServiceQueueRenege < handle
 
             % Loop through the Waiting queue and if the customer ID
             % is same as the reneging customer's, assign that customer.
-            for i = 1:length(obj.Waiting)
-                if renege.custID == obj.Waiting{i}.Id
+            i = 1;
+            while i < length(obj.Waiting)
+                if renege.customerID == obj.Waiting{i}.Id
                     customer = obj.Waiting{i};
 
                     % Remove customer from wait queue
                     obj.Waiting(i) = [];
                     % Record the event time as the departure time for this
                     % customer.
-                    customer.DepartureTime = departure.Time;
+                    customer.DepartureTime = renege.Time;
         
                     % Add this Customer object to the end of Served.
                     obj.Reneged{end+1} = customer;
                 end
+                i=i+1;
             end
 
             % Check to see if any customers can advance.

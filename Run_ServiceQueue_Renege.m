@@ -12,11 +12,11 @@ mu = 12;
 %[text] Number of serving stations
 s = 1;
 %[text] Reneging rate
-theta = 1;
+theta = 4;
 %[text] Run many samples of the queue.
 NumSamples = 20;
 %[text] Each sample is run up to a maximum time.
-MaxTime = 96;
+MaxTime = 8;
 %[text] Make a log entry every so often
 LogInterval = 1/60;
 %%
@@ -57,11 +57,13 @@ for SampleNum = 1:NumSamples
     if mod(SampleNum, 100) == 0
         fprintf("\n");
     end
-    q = ServiceQueue( ...
+    q = ServiceQueueRenege( ...
         ArrivalRate=lambda, ...
         DepartureRate=mu, ...
         NumServers=s, ...
-        LogInterval=LogInterval);
+        LogInterval=LogInterval, ...
+        RenegeRate=1/theta, ...
+        RenegeDist=makedist("Exponential", "mu", 1/theta));
     q.schedule_event(Arrival(random(q.InterArrivalDist), Customer(1)));
     run_until(q, MaxTime);
     QSamples{SampleNum} = q;
@@ -179,6 +181,135 @@ pause(2);
 %[text] Save the picture.
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.pdf");
 exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.svg");
+%%
+%calculate the mean number waiting
+NumWaitingQueue = cellfun(@(q) mean(q.Log.NumWaiting), QSamples);
+meanNumWaiting = mean(cellfun(@(q) mean(q.Log.NumWaiting), QSamples))
+
+%calculate the expected waiting time in queue
+
+TimeInQueueSamples = cellfun( ...
+    @(q) cellfun(@(c) c.BeginServiceTime - c.ArrivalTime, q.Served'), ...
+    QSamples, ...
+    UniformOutput=false);
+TimeInQueue = vertcat(TimeInQueueSamples{:});
+meanTimeInQueue = mean(TimeInQueue);
+fprintf("Mean time in queue: %f\n", meanTimeInQueue);
+
+% Calculate the time customers spend being served
+TimeInServiceSamples = cellfun( ...
+    @(q) cellfun(@(c) c.DepartureTime - c.BeginServiceTime, q.Served'), ...
+    QSamples, ...
+    UniformOutput=false);
+TimeInService = vertcat(TimeInServiceSamples{:});
+meanTimeInService = mean(TimeInService);
+fprintf("Mean time in service: %f\n", meanTimeInService);
+
+% Count of customers served per shift
+NumServedQueue = cellfun(@(q) numel(q.Served), QSamples);
+meanNumServed = mean(NumServedQueue);
+fprintf("Mean number served: %f\n", meanNumServed);
+%[text] Make a figure with one set of axes.
+fig = figure();
+t = tiledlayout(fig,1,1);
+ax = nexttile(t);
+%[text] This time, the data is a list of real numbers, not integers.  The option `BinWidth=...` means to use bins of a particular width, and choose the left-most and right-most edges automatically.  Instead, you could specify the left-most and right-most edges explicitly.  For instance, using `BinEdges=0:0.5:60` means to use bins $(0, 0.5), (0.5, 1.0), \\dots$
+h = histogram(ax, TimeInQueue, Normalization="probability", BinWidth=5/60);
+%[text] Add titles and labels and such.
+title(ax, "Time in the queue");
+xlabel(ax, "Time");
+ylabel(ax, "Probability");
+%[text] Set ranges on the axes.
+%ylim(ax, [0, 0.2]);
+xlim(ax, [0, 2.0]);
+%[text] Wait for MATLAB to catch up.
+pause(2);
+%[text] Save the picture.
+exportgraphics(fig, PictureFolder + filesep + "Time in queue histogram.pdf");
+exportgraphics(fig, PictureFolder + filesep + "Time in queue histogram.svg");
+%[text] Make a figure with one set of axes.
+fig = figure();
+t = tiledlayout(fig,1,1);
+ax = nexttile(t);
+%[text] MATLAB-ism: Once you've created a picture, you can use `hold` to cause further plotting functions to work with the same picture rather than create a new one.
+hold(ax, "on");
+%[text] Start with a histogram.  The result is an empirical PDF, that is, the area of the bar at horizontal index n is proportional to the fraction of samples for which there were n customers in the system.  The data for this histogram is counts of customers, which must all be whole numbers.  The option `BinMethod="integers"` means to use bins $(-0.5, 0.5), (0.5, 1.5), \\dots$ so that the height of the first bar is proportional to the count of 0s in the data, the height of the second bar is proportional to the count of 1s, etc. MATLAB can choose bins automatically, but since we know the data consists of whole numbers, it makes sense to specify this option so we get consistent results.
+h = histogram(ax, NumWaitingQueue, Normalization="probability", BinMethod="integers");
+%[text] Plot $(0, P\_0), (1, P\_1), \\dots$.  If all goes well, these dots should land close to the tops of the bars of the histogram.
+%plot(ax, 0:nMax, P, 'o', MarkerEdgeColor='k', MarkerFaceColor='r');
+%[text] Add titles and labels and such.
+title(ax, "Number of customers in the queue");
+xlabel(ax, "Count");
+ylabel(ax, "Probability");
+%legend(ax, "simulation", "theory");
+%[text] Set ranges on the axes. MATLAB's plotting functions do this automatically, but when you need to compare two sets of data, it's a good idea to use the same ranges on the two pictures.  To start, you can let MATLAB choose the ranges automatically, and just know that it might choose very different ranges for different sets of data.  Once you're certain the picture content is correct, choose an x range and a y range that gives good results for all sets of data.  The final choice of ranges is a matter of some trial and error.  You generally have to do these commands *after* calling `plot` and `histogram`.
+%[text] This sets the vertical axis to go from $0$ to $0.2$.
+%ylim(ax, [0, 0.2]);
+%[text] This sets the horizontal axis to go from $-1$ to $21$.  The histogram will use bins $(-0.5, 0.5), (0.5, 1.5), \\dots$ so this leaves some visual breathing room on the left.
+xlim(ax, [-1, 21]);
+%[text] MATLAB-ism: You have to wait a couple of seconds for those settings to take effect or `exportgraphics` will screw up the margins.
+pause(2);
+%[text] Save the picture.
+exportgraphics(fig, PictureFolder + filesep + "Number in queue histogram.pdf");
+exportgraphics(fig, PictureFolder + filesep + "Number in queue histogram.svg");
+%[text] Make a figure with one set of axes.
+fig = figure();
+t = tiledlayout(fig,1,1);
+ax = nexttile(t);
+%[text] This time, the data is a list of real numbers, not integers.  The option `BinWidth=...` means to use bins of a particular width, and choose the left-most and right-most edges automatically.  Instead, you could specify the left-most and right-most edges explicitly.  For instance, using `BinEdges=0:0.5:60` means to use bins $(0, 0.5), (0.5, 1.0), \\dots$
+h = histogram(ax, NumServedQueue, Normalization="probability", BinWidth=5/60);
+%[text] Add titles and labels and such.
+title(ax, "Number Served");
+xlabel(ax, "Count");
+ylabel(ax, "Probability");
+%[text] Set ranges on the axes.
+%ylim(ax, [0, 0.2]);
+%xlim(ax, [0, 2.0]);
+%[text] Wait for MATLAB to catch up.
+pause(2);
+%[text] Save the picture.
+exportgraphics(fig, PictureFolder + filesep + "Number served histogram.pdf");
+exportgraphics(fig, PictureFolder + filesep + "Number served histogram.svg");
+%[text] Make a figure with one set of axes.
+fig = figure();
+t = tiledlayout(fig,1,1);
+ax = nexttile(t);
+%[text] This time, the data is a list of real numbers, not integers.  The option `BinWidth=...` means to use bins of a particular width, and choose the left-most and right-most edges automatically.  Instead, you could specify the left-most and right-most edges explicitly.  For instance, using `BinEdges=0:0.5:60` means to use bins $(0, 0.5), (0.5, 1.0), \\dots$
+h = histogram(ax, TimeInService, Normalization="probability", BinWidth=5/60);
+%[text] Add titles and labels and such.
+title(ax, "Service Time");
+xlabel(ax, "Time");
+ylabel(ax, "Probability");
+%[text] Set ranges on the axes.
+%ylim(ax, [0, 0.2]);
+%xlim(ax, [0, 2.0]);
+%[text] Wait for MATLAB to catch up.
+pause(2);
+%[text] Save the picture.
+exportgraphics(fig, PictureFolder + filesep + "Time in service histogram.pdf");
+exportgraphics(fig, PictureFolder + filesep + "Time in service histogram.svg");
+% Count of customers renege per shift
+NumRenegedQueue = cellfun(@(q) numel(q.Reneged), QSamples);
+meanNumReneged = mean(NumRenegedQueue);
+fprintf("Mean number reneged: %f\n", meanNumReneged);
+%[text] Make a figure with one set of axes.
+fig = figure();
+t = tiledlayout(fig,1,1);
+ax = nexttile(t);
+%[text] This time, the data is a list of real numbers, not integers.  The option `BinWidth=...` means to use bins of a particular width, and choose the left-most and right-most edges automatically.  Instead, you could specify the left-most and right-most edges explicitly.  For instance, using `BinEdges=0:0.5:60` means to use bins $(0, 0.5), (0.5, 1.0), \\dots$
+h = histogram(ax, NumRenegedQueue, Normalization="probability", BinWidth=5/60);
+%[text] Add titles and labels and such.
+title(ax, "Number Reneged");
+xlabel(ax, "Count");
+ylabel(ax, "Probability");
+%[text] Set ranges on the axes.
+%ylim(ax, [0, 0.2]);
+%xlim(ax, [0, 2.0]);
+%[text] Wait for MATLAB to catch up.
+pause(2);
+%[text] Save the picture.
+exportgraphics(fig, PictureFolder + filesep + "Number Reneged histogram.pdf");
+exportgraphics(fig, PictureFolder + filesep + "Number Reneged histogram.svg");
 
 %[appendix]{"version":"1.0"}
 %---
