@@ -1,7 +1,7 @@
 %[text] # Run samples of the ServiceQueue simulation
 %[text] Collect statistics and plot histograms along the way.
 PictureFolder = "Pictures";
-mkdir(PictureFolder);
+mkdir(PictureFolder); %[output:2f228119]
 %%
 %[text] ## Set up
 %[text] We'll measure time in hours
@@ -11,6 +11,8 @@ lambda = 10;
 mu = 12;
 %[text] Number of serving stations
 s = 1;
+%[text] Reneging rate
+theta = 1;
 %[text] Run many samples of the queue.
 NumSamples = 20;
 %[text] Each sample is run up to a maximum time.
@@ -21,7 +23,6 @@ LogInterval = 1/60;
 %[text] ## Numbers from theory for M/M/1 queue
 %[text] Compute `P(1+n)` = $P\_n$ = probability of finding the system in state $n$ in the long term. Note that this calculation assumes $s=1$.
 P0 = 1 / hypergeom([1], [mu/theta], lambda/theta); %[output:7df109ed]
-
 NMax = 10;
 P = zeros([NMax+1, 1]);
 P(1) = P0;
@@ -34,9 +35,9 @@ end
 %[text] #### 1) Compute P\_0, ..., P\_5 from the theory. How do they compare with the results without reneging? Does this make sense?
 %[text] The results of P\_0 to P\_5 from our simulation without reneging are P=\[0.3333 0.2222 0.1480 0.0988 0.0658 0.0439\]. 
 % Display P_1 through P_5 
-for j = 0:5 %[output:group:34695d14]
-    fprintf('P_%d = %.6f\n', j, P(1+j)); %[output:3203f855]
-end %[output:group:34695d14]
+for j = 0:5
+    fprintf('P_%d = %.6f\n', j, P(1+j));
+end
 %[text] #### 2) The book includes the following formula for the fraction pi\_s of customers who are served without reneging: pi\_s = mu(1-P\_0)/lambda. Compute this theoretical value. Don’t try to compute theoretical values for the other equilibrium parameters. We’ll stick to simulation for those.
 %[text] ... 
 pi_s = mu * (1 - P0) / lambda
@@ -183,9 +184,9 @@ exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.svg");
 %[metadata:view]
 %   data: {"layout":"inline"}
 %---
-%[output:7df109ed]
-%   data: {"dataType":"error","outputData":{"errorType":"runtime","text":"theta requires one of the following:\n  <a href=\"matlab:matlab.internal.addons.launchers.showExplorer('ErrorRecovery', 'identifier', 'TF', 'focused', 'theta');\">Sensor Fusion and Tracking Toolbox<\/a>\n  <a href=\"matlab:matlab.internal.addons.launchers.showExplorer('ErrorRecovery', 'identifier', 'NV', 'focused', 'theta');\">Navigation Toolbox<\/a>\n  <a href=\"matlab:matlab.internal.addons.launchers.showExplorer('ErrorRecovery', 'identifier', 'RO', 'focused', 'theta');\">Robotics System Toolbox<\/a>\n  <a href=\"matlab:matlab.internal.addons.launchers.showExplorer('ErrorRecovery', 'identifier', 'RR', 'focused', 'theta');\">ROS Toolbox<\/a>\n  <a href=\"matlab:matlab.internal.addons.launchers.showExplorer('ErrorRecovery', 'identifier', 'UV', 'focused', 'theta');\">UAV Toolbox<\/a>"}}
+%[output:2f228119]
+%   data: {"dataType":"warning","outputData":{"text":"Warning: Directory already exists."}}
 %---
-%[output:3203f855]
-%   data: {"dataType":"error","outputData":{"errorType":"runtime","text":"Unrecognized function or variable 'P'."}}
+%[output:7df109ed]
+%   data: {"dataType":"error","outputData":{"errorType":"runtime","text":"hypergeom requires <a href=\"matlab:matlab.internal.addons.launchers.showExplorer('ErrorRecovery', 'identifier', 'SM', 'focused', 'hypergeom');\">Symbolic Math Toolbox<\/a>."}}
 %---
