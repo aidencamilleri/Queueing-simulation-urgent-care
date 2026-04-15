@@ -5,18 +5,19 @@ mkdir(PictureFolder);
 %%
 %[text] ## Set up
 %[text] We'll measure time in hours
-%[text] Arrival rate: 10 per hour
-lambda = 10;
-%[text] Departure (service) rate: 1 per 5 minutes, so 12 per hour
-mu = 12;
+%[text] Arrival rate: 2 per hour
+lambda = 2;
+%[text] Departure (service) rate: 1 per 20 minutes, so 3 per hour
+mu = 3;
 %[text] Number of serving stations
 s = 1;
 %[text] Run many samples of the queue.
 NumSamples = 20;
 %[text] Each sample is run up to a maximum time.
-MaxTime = 96;
+MaxTime = 8;
 %[text] Make a log entry every so often
-LogInterval = 1/60;
+%[text] \#1/60
+LogInterval = 1;
 %%
 %[text] ## Numbers from theory for M/M/1 queue
 %[text] Compute `P(1+n)` = $P\_n$ = probability of finding the system in state $n$ in the long term. Note that this calculation assumes $s=1$.
@@ -36,9 +37,9 @@ rng("default");
 %[text] We'll store our queue simulation objects in this list.
 QSamples = cell([NumSamples, 1]);
 %[text] The statistics come out weird if the log interval is too short, because the log entries are not independent enough.  So the log interval should be long enough for several arrival and departure events happen.
-for SampleNum = 1:NumSamples
+for SampleNum = 1:NumSamples %[output:group:095dd724]
     if mod(SampleNum, 10) == 0
-        fprintf("%d ", SampleNum);
+        fprintf("%d ", SampleNum); %[output:4f32caa3]
     end
     if mod(SampleNum, 100) == 0
         fprintf("\n");
@@ -51,7 +52,7 @@ for SampleNum = 1:NumSamples
     q.schedule_event(Arrival(random(q.InterArrivalDist), Customer(1)));
     run_until(q, MaxTime);
     QSamples{SampleNum} = q;
-end
+end %[output:group:095dd724]
 %%
 %[text] ## Collect measurements of how many customers are in the system
 %[text] Count how many customers are in the system at each log entry for each sample run.  There are two ways to do this.  You only have to do one of them.
@@ -82,7 +83,7 @@ NumInSystem = vertcat(NumInSystemSamples{:});
 %[text] ## Pictures and stats for number of customers in system
 %[text] Print out mean number of customers in the system.
 meanNumInSystem = mean(NumInSystem);
-fprintf("Mean number in system: %f\n", meanNumInSystem);
+fprintf("Mean number in system: %f\n", meanNumInSystem); %[output:8327c1f1]
 %[text] Make a figure with one set of axes.
 fig = figure();
 t = tiledlayout(fig,1,1);
@@ -170,4 +171,10 @@ exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.svg");
 %---
 %[metadata:view]
 %   data: {"layout":"inline"}
+%---
+%[output:4f32caa3]
+%   data: {"dataType":"text","outputData":{"text":"10 20 ","truncated":false}}
+%---
+%[output:8327c1f1]
+%   data: {"dataType":"text","outputData":{"text":"Mean number in system: 0.987730\n","truncated":false}}
 %---
