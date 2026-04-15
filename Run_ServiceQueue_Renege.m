@@ -1,7 +1,7 @@
 %[text] # Run samples of the ServiceQueue simulation
 %[text] Collect statistics and plot histograms along the way.
 PictureFolder = "Pictures";
-mkdir(PictureFolder); %[output:2f228119]
+mkdir(PictureFolder);
 %%
 %[text] ## Set up
 %[text] We'll measure time in hours
@@ -22,7 +22,7 @@ LogInterval = 1/60;
 %%
 %[text] ## Numbers from theory for M/M/1 queue
 %[text] Compute `P(1+n)` = $P\_n$ = probability of finding the system in state $n$ in the long term. Note that this calculation assumes $s=1$.
-P0 = 1 / hypergeom([1], [mu/theta], lambda/theta); %[output:7df109ed]
+P0 = 1 / hypergeom([1], [mu/theta], lambda/theta);
 NMax = 10;
 P = zeros([NMax+1, 1]);
 P(1) = P0;
@@ -30,6 +30,7 @@ P(1) = P0;
 for j = 1:NMax
     P(1+j) = P(j) * (lambda / (mu + (j-1)*theta));
 end
+nMax = NMax;
 %%
 %[text] ## Part 3.2 Questions:
 %[text] #### 1) Compute P\_0, ..., P\_5 from the theory. How do they compare with the results without reneging? Does this make sense?
@@ -183,10 +184,4 @@ exportgraphics(fig, PictureFolder + filesep + "Time in system histogram.svg");
 %---
 %[metadata:view]
 %   data: {"layout":"inline"}
-%---
-%[output:2f228119]
-%   data: {"dataType":"warning","outputData":{"text":"Warning: Directory already exists."}}
-%---
-%[output:7df109ed]
-%   data: {"dataType":"error","outputData":{"errorType":"runtime","text":"hypergeom requires <a href=\"matlab:matlab.internal.addons.launchers.showExplorer('ErrorRecovery', 'identifier', 'SM', 'focused', 'hypergeom');\">Symbolic Math Toolbox<\/a>."}}
 %---
