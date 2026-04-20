@@ -227,6 +227,7 @@ pause(2);
 %[text] Save the picture.
 exportgraphics(fig, PictureFolder + filesep + "Time in queue histogram.pdf");
 exportgraphics(fig, PictureFolder + filesep + "Time in queue histogram.svg");
+%[text] **Histogram of number of customers in queue**
 %[text] Make a figure with one set of axes.
 fig = figure();
 t = tiledlayout(fig,1,1);
@@ -252,6 +253,7 @@ pause(2);
 %[text] Save the picture.
 exportgraphics(fig, PictureFolder + filesep + "Number in queue histogram.pdf");
 exportgraphics(fig, PictureFolder + filesep + "Number in queue histogram.svg");
+%[text] **Histogram of number served**
 %[text] Make a figure with one set of axes.
 fig = figure();
 t = tiledlayout(fig,1,1);
@@ -292,6 +294,7 @@ exportgraphics(fig, PictureFolder + filesep + "Time in service histogram.svg");
 NumRenegedQueue = cellfun(@(q) numel(q.Reneged), QSamples);
 meanNumReneged = mean(NumRenegedQueue);
 fprintf("Mean number reneged: %f\n", meanNumReneged);
+%[text] **Histogram of number reneged**
 %[text] Make a figure with one set of axes.
 fig = figure();
 t = tiledlayout(fig,1,1);
