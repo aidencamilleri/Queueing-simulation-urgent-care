@@ -215,6 +215,7 @@ fprintf("Mean time in service: %f\n", meanTimeInService); %[output:8c61d878]
 NumServedQueue = cellfun(@(q) numel(q.Served), QSamples);
 meanNumServed = mean(NumServedQueue);
 fprintf("Mean number served: %f\n", meanNumServed); %[output:0430b6b0]
+%[text] **Histogram for Time in Queue**
 %[text] Make a figure with one set of axes.
 fig = figure(); %[output:31c49838]
 t = tiledlayout(fig,1,1); %[output:31c49838]
@@ -233,6 +234,7 @@ pause(2);
 %[text] Save the picture.
 exportgraphics(fig, PictureFolder + filesep + "Time in queue histogram.pdf"); %[output:31c49838]
 exportgraphics(fig, PictureFolder + filesep + "Time in queue histogram.svg"); %[output:31c49838]
+%[text] **Histogram for number of customers in queue**
 %[text] Make a figure with one set of axes.
 fig = figure(); %[output:1a875bd5]
 t = tiledlayout(fig,1,1); %[output:1a875bd5]
@@ -258,6 +260,7 @@ pause(2);
 %[text] Save the picture.
 exportgraphics(fig, PictureFolder + filesep + "Number in queue histogram.pdf"); %[output:1a875bd5]
 exportgraphics(fig, PictureFolder + filesep + "Number in queue histogram.svg"); %[output:1a875bd5]
+%[text] **Histogram for number of customers served**
 %[text] Make a figure with one set of axes.
 fig = figure(); %[output:75531d8b]
 t = tiledlayout(fig,1,1); %[output:75531d8b]
@@ -276,6 +279,7 @@ pause(2);
 %[text] Save the picture.
 exportgraphics(fig, PictureFolder + filesep + "Number served histogram.pdf"); %[output:75531d8b]
 exportgraphics(fig, PictureFolder + filesep + "Number served histogram.svg"); %[output:75531d8b]
+%[text] **Histogram for service time**
 %[text] Make a figure with one set of axes.
 fig = figure(); %[output:18fd4a02]
 t = tiledlayout(fig,1,1); %[output:18fd4a02]
